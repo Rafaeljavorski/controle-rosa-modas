@@ -734,10 +734,41 @@ async function carregarStrip(id){
   lbFotos=fs;
   el.innerHTML=fs.map((f,i)=>`<img src="${f}" onclick="verFotos(${i})" alt="">`).join('');
 }
-function mandarZap(id){
+const LOJA={nome:'Rosa Modas',tag:'Moda Feminina · Casual · Fitness',insta:'instagram.com/rosamodas59'};
+
+function mensagem(p){
+  const det=[p.cor,p.tam?'Tam '+p.tam:''].filter(Boolean).join(' · ');
+  return ['🌸 *'+p.nome+'*',det,'','*'+brl(p.preco)+'*','',
+    '_'+LOJA.nome+' · '+LOJA.tag+'_','📷 '+LOJA.insta].filter(l=>l!=='' || true).join('\n');
+}
+async function fotosComoArquivos(id){
+  try{
+    const fs=await lerFotos(id);
+    return await Promise.all(fs.slice(0,3).map(async(d,i)=>{
+      const b=await (await fetch(d)).blob();
+      return new File([b],'rosamodas-'+(i+1)+'.jpg',{type:'image/jpeg'});
+    }));
+  }catch(e){return[]}
+}
+async function mandarZap(id){
   const p=S.produtos.find(x=>x.id===id);
-  const t=`${p.nome}\n${p.cor} · Tam ${p.tam}\n${brl(p.preco)}\n\nRosa Modas · @rosamodas59`;
-  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+  if(!p)return;
+  const txt=mensagem(p);
+  try{await navigator.clipboard.writeText(txt)}catch(e){}
+  const arquivos=await fotosComoArquivos(id);
+
+  if(arquivos.length && navigator.canShare && navigator.canShare({files:arquivos})){
+    try{
+      await navigator.share({files:arquivos,text:txt});
+      toast('Se o texto não vier junto, é só colar — já está copiado.');
+      return;
+    }catch(e){ if(e.name==='AbortError')return; }
+  }
+  if(navigator.share){
+    try{ await navigator.share({text:txt}); return; }
+    catch(e){ if(e.name==='AbortError')return; }
+  }
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
 function abrirReposicao(id){
   const p=S.produtos.find(x=>x.id===id);
