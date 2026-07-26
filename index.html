@@ -318,7 +318,7 @@ const CATS=['Blusa','Camiseta','Vestido','Saia','Calça','Short','Legging','Top'
 const TAMS=['PP','P','M','G','GG','XG','Único','36','38','40','42','44','46'];
 
 let S={produtos:[],movimentos:[]};
-let aba='vender',busca='',periodo=7,form={},fotosSheet=[],lbIdx=0,lbFotos=[],undoTimer=null,venda={};
+let aba='vender',busca='',periodo=7,ficha={},fotosSheet=[],lbIdx=0,lbFotos=[],undoTimer=null,venda={};
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -546,12 +546,12 @@ const cab=(t,s)=>`<div class="sheet-head"><h2>${t}</h2>${s?`<p>${s}</p>`:''}</di
 
 /* ============ cadastro ============ */
 function abrirNova(){
-  form={id:null,nome:'',cor:'',tam:'',cat:'',qtd:1,custo:'',preco:''};
+  ficha={id:null,nome:'',cor:'',tam:'',cat:'',qtd:1,custo:'',preco:''};
   fotosSheet=[];sheetForm(false);
 }
 async function abrirEdicao(id){
   const p=S.produtos.find(x=>x.id===id);if(!p)return;
-  form={id:p.id,nome:p.nome,cor:p.cor,tam:p.tam,cat:p.cat,qtd:p.qtd,
+  ficha={id:p.id,nome:p.nome,cor:p.cor,tam:p.tam,cat:p.cat,qtd:p.qtd,
     custo:String(p.custo).replace('.',','),preco:String(p.preco).replace('.',',')};
   fotosSheet=[];sheetForm(true);
   fotosSheet=await lerFotos(id);pintaFotos();
@@ -559,46 +559,50 @@ async function abrirEdicao(id){
 function sheetForm(edit){
   abrirSheet(cab(edit?'Editar peça':'Nova peça',edit?'':'Preencha o básico e salve. Dá para editar depois.')+`
     <div class="field"><span class="tag-label">Nome da peça</span>
-      <input class="inp" placeholder="Ex.: Vestido midi canelado" value="${esc(form.nome)}"
-        list="nomes" oninput="form.nome=this.value">
+      <input id="f-nome" class="inp" placeholder="Ex.: Vestido midi canelado" value="${esc(ficha.nome)}"
+        list="nomes" oninput="ficha.nome=this.value">
       <datalist id="nomes">${[...new Set(S.produtos.map(p=>p.nome))].map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>
     <div class="field"><span class="tag-label">Fotos · até 3</span>
       <div class="fotos" id="grade-fotos"></div>
       <p class="hint">A foto ajuda a achar a peça rápido na hora de vender.</p></div>
     <div class="field"><span class="tag-label">Cor</span>
       <div class="chips" id="c-cor">${CORES.map(([n])=>
-        `<button class="chip-sw" aria-pressed="${form.cor===n}" onclick="pick('cor','${n}','c-cor')">${swHTML(n)}${n}</button>`).join('')}</div></div>
+        `<button class="chip-sw" aria-pressed="${ficha.cor===n}" onclick="pick('cor','${n}','c-cor')">${swHTML(n)}${n}</button>`).join('')}</div></div>
     <div class="field"><span class="tag-label">Tamanho</span>
       <div class="chips" id="c-tam">${TAMS.map(n=>
-        `<button class="chip" aria-pressed="${form.tam===n}" onclick="pick('tam','${n}','c-tam')">${n}</button>`).join('')}</div></div>
+        `<button class="chip" aria-pressed="${ficha.tam===n}" onclick="pick('tam','${n}','c-tam')">${n}</button>`).join('')}</div></div>
     <div class="field"><span class="tag-label">Categoria</span>
       <div class="chips" id="c-cat">${CATS.map(n=>
-        `<button class="chip" aria-pressed="${form.cat===n}" onclick="pick('cat','${n}','c-cat')">${n}</button>`).join('')}</div></div>
+        `<button class="chip" aria-pressed="${ficha.cat===n}" onclick="pick('cat','${n}','c-cat')">${n}</button>`).join('')}</div></div>
     <div class="field"><span class="tag-label">${edit?'Quantidade em estoque':'Quantas peças entraram'}</span>
       <div class="step"><button onclick="passo(-1)">−</button>
-        <input id="f-qtd" inputmode="numeric" value="${form.qtd}" oninput="form.qtd=Math.max(0,parseInt(this.value||0))">
+        <input id="f-qtd" inputmode="numeric" value="${ficha.qtd}" oninput="ficha.qtd=Math.max(0,parseInt(this.value||0))">
         <button onclick="passo(1)">＋</button></div></div>
     <div class="two">
       <div class="field"><span class="tag-label">Custou (un)</span>
-        <div class="money"><span>R$</span><input inputmode="decimal" placeholder="0,00"
-          value="${esc(form.custo)}" oninput="form.custo=this.value;margem()"></div></div>
+        <div class="money"><span>R$</span><input id="f-custo" inputmode="decimal" placeholder="0,00"
+          value="${esc(ficha.custo)}" oninput="ficha.custo=this.value;margem()"></div></div>
       <div class="field"><span class="tag-label">Vende por (un)</span>
-        <div class="money"><span>R$</span><input inputmode="decimal" placeholder="0,00"
-          value="${esc(form.preco)}" oninput="form.preco=this.value;margem()"></div></div></div>
+        <div class="money"><span>R$</span><input id="f-preco" inputmode="decimal" placeholder="0,00"
+          value="${esc(ficha.preco)}" oninput="ficha.preco=this.value;margem()"></div></div></div>
     <p class="hint" id="margem" style="margin-top:-6px;margin-bottom:16px"></p>
     <button class="btn" onclick="salvarPeca(false)">${edit?'Salvar alterações':'Salvar peça'}</button>
     ${edit?'':'<button class="btn ghost" onclick="salvarPeca(true)">Salvar e cadastrar outra</button>'}`);
   pintaFotos();margem();
 }
 function pick(k,v,cid){
-  form[k]=form[k]===v?'':v;
-  [...$(cid).children].forEach(b=>b.setAttribute('aria-pressed',b.textContent.trim()===form[k]));
+  ficha[k]=ficha[k]===v?'':v;
+  [...$(cid).children].forEach(b=>b.setAttribute('aria-pressed',b.textContent.trim()===ficha[k]));
 }
-function passo(d){form.qtd=Math.max(0,(form.qtd||0)+d);$('f-qtd').value=form.qtd}
+function passo(d){ficha.qtd=Math.max(0,(ficha.qtd||0)+d);$('f-qtd').value=ficha.qtd}
+function campo(id,padrao){
+  const el=document.getElementById(id);
+  return el && el.value!=='' ? el.value : (padrao==null?'':padrao);
+}
 function num(s){const v=parseFloat(String(s).replace(/\./g,'').replace(',','.'));return isNaN(v)?0:v}
 function margem(){
   const el=$('margem');if(!el)return;
-  const c=num(form.custo),p=num(form.preco);
+  const c=num(ficha.custo),p=num(ficha.preco);
   if(!p){el.innerHTML='';return}
   const l=p-c;
   el.innerHTML=`Lucro por peça: <b class="${l<0?'neg':''}">${brl(l)}</b> (${Math.round(l/p*100)}%)`;
@@ -629,27 +633,31 @@ function pedirFoto(){
   inp.click();
 }
 async function salvarPeca(outra){
-  if(!form.nome.trim())return toast('Dê um nome para a peça.');
-  if(!num(form.preco))return toast('Informe por quanto ela vende.');
-  const custo=num(form.custo),preco=num(form.preco),qtd=Math.max(0,form.qtd||0);
+  ficha.nome  = campo('f-nome', ficha.nome);
+  ficha.custo = campo('f-custo', ficha.custo);
+  ficha.preco = campo('f-preco', ficha.preco);
+  ficha.qtd   = Math.max(0, parseInt(campo('f-qtd', ficha.qtd),10) || 0);
+  if(!ficha.nome.trim())return toast('Dê um nome para a peça.');
+  if(!num(ficha.preco))return toast('Informe por quanto ela vende.');
+  const custo=num(ficha.custo),preco=num(ficha.preco),qtd=ficha.qtd;
   const capa=fotosSheet.length?await redim(fotosSheet[0],170,.6):null;
-  if(form.id){
-    const p=S.produtos.find(x=>x.id===form.id);
+  if(ficha.id){
+    const p=S.produtos.find(x=>x.id===ficha.id);
     const dif=qtd-p.qtd;
-    Object.assign(p,{nome:form.nome.trim(),cor:form.cor||'Sem cor',tam:form.tam||'Único',
-      cat:form.cat,custo,preco,qtd,capa,atualizado:Date.now()});
+    Object.assign(p,{nome:ficha.nome.trim(),cor:ficha.cor||'Sem cor',tam:ficha.tam||'Único',
+      cat:ficha.cat,custo,preco,qtd,capa,atualizado:Date.now()});
     if(dif>0)S.movimentos.push(mov('entrada',p,dif,custo,custo));
     await gravarFotos(p.id,fotosSheet);await salvar();fecharSheet();render();
     return toast('Peça atualizada.');
   }
-  const p={id:uid('p'),nome:form.nome.trim(),cor:form.cor||'Sem cor',tam:form.tam||'Único',
-    cat:form.cat,custo,preco,qtd,capa,criado:Date.now(),atualizado:Date.now()};
+  const p={id:uid('p'),nome:ficha.nome.trim(),cor:ficha.cor||'Sem cor',tam:ficha.tam||'Único',
+    cat:ficha.cat,custo,preco,qtd,capa,criado:Date.now(),atualizado:Date.now()};
   S.produtos.push(p);
   if(qtd>0)S.movimentos.push(mov('entrada',p,qtd,custo,custo));
   await gravarFotos(p.id,fotosSheet);await salvar();render();
   toast(p.nome+' cadastrada.');
   if(outra){
-    form={id:null,nome:'',cor:form.cor,tam:'',cat:form.cat,qtd:1,custo:form.custo,preco:''};
+    ficha={id:null,nome:'',cor:ficha.cor,tam:'',cat:ficha.cat,qtd:1,custo:ficha.custo,preco:''};
     fotosSheet=[];sheetForm(false);
   }else fecharSheet();
 }
@@ -669,7 +677,7 @@ function abrirVenda(id){
         <input id="v-qtd" inputmode="numeric" value="1" oninput="venda.qtd=Math.max(1,parseInt(this.value||1));vTotal()">
         <button onclick="vQtd(1)">＋</button></div></div>
     <div class="field"><span class="tag-label">Preço cobrado (un)</span>
-      <div class="money"><span>R$</span><input inputmode="decimal" value="${esc(venda.preco)}"
+      <div class="money"><span>R$</span><input id="v-preco" inputmode="decimal" value="${esc(venda.preco)}"
         oninput="venda.preco=this.value;vTotal()"></div>
       <p class="hint">Mudou por desconto? É só ajustar aqui.</p></div>
     <div class="total"><span class="tag-label">Total</span><b id="v-total">${brl(p.preco)}</b></div>
@@ -684,6 +692,8 @@ function vQtd(d){
 function vTotal(){$('v-total').textContent=brl(num(venda.preco)*venda.qtd)}
 async function confirmarVenda(){
   const p=S.produtos.find(x=>x.id===venda.id);
+  venda.preco = campo('v-preco', venda.preco);
+  venda.qtd   = Math.max(1, parseInt(campo('v-qtd', venda.qtd),10) || 1);
   const preco=num(venda.preco),qtd=Math.min(p.qtd,venda.qtd);
   if(!qtd)return toast('Sem estoque dessa peça.');
   p.qtd-=qtd;p.atualizado=Date.now();
@@ -731,20 +741,21 @@ function mandarZap(id){
 }
 function abrirReposicao(id){
   const p=S.produtos.find(x=>x.id===id);
-  form={id,qtd:1,custo:String(p.custo).replace('.',',')};
+  ficha={id,qtd:1,custo:String(p.custo).replace('.',',')};
   abrirSheet(cab('Repor estoque',`${esc(p.nome)} · ${esc(p.cor)} · ${esc(p.tam)}`)+`
     <div class="field"><span class="tag-label">Quantas peças chegaram</span>
       <div class="step"><button onclick="passo(-1)">−</button>
-        <input id="f-qtd" inputmode="numeric" value="1" oninput="form.qtd=Math.max(1,parseInt(this.value||1))">
+        <input id="f-qtd" inputmode="numeric" value="1" oninput="ficha.qtd=Math.max(1,parseInt(this.value||1))">
         <button onclick="passo(1)">＋</button></div></div>
     <div class="field"><span class="tag-label">Custo por peça</span>
-      <div class="money"><span>R$</span><input inputmode="decimal" value="${esc(form.custo)}"
-        oninput="form.custo=this.value"></div></div>
+      <div class="money"><span>R$</span><input id="r-custo" inputmode="decimal" value="${esc(ficha.custo)}"
+        oninput="ficha.custo=this.value"></div></div>
     <button class="btn" onclick="confirmarReposicao()">Adicionar ao estoque</button>`);
 }
 async function confirmarReposicao(){
-  const p=S.produtos.find(x=>x.id===form.id);
-  const q=Math.max(1,form.qtd||1),c=num(form.custo);
+  const p=S.produtos.find(x=>x.id===ficha.id);
+  const q=Math.max(1, parseInt(campo('f-qtd', ficha.qtd),10) || 1);
+  const c=num(campo('r-custo', ficha.custo));
   p.qtd+=q;p.custo=c||p.custo;p.atualizado=Date.now();
   const m=mov('entrada',p,q,c,c);
   S.movimentos.push(m);await salvar();fecharSheet();render();
