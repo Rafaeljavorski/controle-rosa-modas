@@ -808,9 +808,64 @@ function abrirAjustes(){
       <div class="stat" style="padding-top:0"><span>Peças cadastradas</span><b>${S.produtos.length}</b></div>
       <div class="stat"><span>Movimentações</span><b>${S.movimentos.length}</b></div>
       <div class="stat"><span>Onde fica salvo<small>${onde}</small></span><b></b></div></div>
+    <button class="btn" onclick="abrirVitrine()">Publicar vitrine do site</button>
     <button class="btn ghost" onclick="exportar()">Baixar backup (.json)</button>
     <button class="btn danger" onclick="apagarTudo()">Apagar todos os dados</button>
     ${guirlanda()}`);
+}
+const ZAP='5541997180152';
+const naVitrine=p=>p.vitrine!==false;
+
+function abrirVitrine(){
+  const l=S.produtos.slice().sort((a,b)=>(b.qtd>0)-(a.qtd>0)||b.criado-a.criado);
+  const n=l.filter(naVitrine).length;
+  abrirSheet(cab('Vitrine do site','Escolha o que aparece pra quem entra no site. O resto fica só no seu estoque.')+`
+    <div class="box"><div class="stat" style="padding-top:0">
+      <span>Peças na vitrine<small>de ${l.length} cadastradas</small></span><b class="rosa" id="v-conta">${n}</b></div></div>
+    <div id="v-lista">${l.map(p=>itemVitrine(p)).join('')}</div>
+    <button class="btn" onclick="gerarCatalogo()">Gerar arquivo do site</button>
+    <p class="hint" style="text-align:center">Depois é só enviar esse arquivo pro Rafael subir no site.</p>`);
+}
+function itemVitrine(p){
+  const on=naVitrine(p);
+  return `<button class="row" id="vi-${p.id}" onclick="toggleVitrine('${p.id}')" style="${on?'':'opacity:.45'}">
+    ${p.capa?`<img class="row-img" src="${p.capa}" alt="">`:`<div class="row-ph">${swHTML(p.cor,'lg')}</div>`}
+    <div class="row-mid"><b>${esc(p.nome)}</b>
+      <span>${swHTML(p.cor)}${esc(p.cor)} · ${esc(p.tam)} · ${p.qtd} un</span></div>
+    <div class="row-end"><b>${brl(p.preco)}</b>
+      <span class="pill" style="${on?'background:var(--rosa);color:#fff':''}">${on?'na vitrine':'oculta'}</span></div>
+  </button>`;
+}
+async function toggleVitrine(id){
+  const p=S.produtos.find(x=>x.id===id); if(!p)return;
+  p.vitrine=!naVitrine(p); p.atualizado=Date.now();
+  await salvar();
+  const el=$('vi-'+id); if(el)el.outerHTML=itemVitrine(p);
+  const c=$('v-conta'); if(c)c.textContent=S.produtos.filter(naVitrine).length;
+}
+async function gerarCatalogo(){
+  const sel=S.produtos.filter(naVitrine);
+  if(!sel.length)return toast('Marque pelo menos uma peça.');
+  toast('Preparando as fotos…');
+  const itens=[];
+  for(const p of sel){
+    let fotos=[];
+    try{
+      const fs=await lerFotos(p.id);
+      for(const f of fs.slice(0,3)) fotos.push(await redim(f,760,.62));
+    }catch(e){}
+    const capa=fotos.length?await redim(fotos[0],400,.55):null;
+    itens.push({id:p.id,nome:p.nome,cor:p.cor,tam:p.tam,cat:p.cat||'',
+      preco:p.preco,qtd:p.qtd,capa,fotos});
+  }
+  const doc={loja:LOJA,zap:ZAP,gerado:Date.now(),itens};
+  const txt=JSON.stringify(doc);
+  const kb=Math.round(txt.length/1024);
+  const b=new Blob([txt],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='catalogo.json'; a.click();
+  fecharSheet();
+  toast(itens.length+' peças · '+(kb>1024?(kb/1024).toFixed(1)+' MB':kb+' KB'));
 }
 function exportar(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
