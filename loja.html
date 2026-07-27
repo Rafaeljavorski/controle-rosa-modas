@@ -1,8 +1,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#E5197F">
-<title>Rosa Modas · Moda Feminina em Curitiba</title>
-<meta name="description" content="Moda feminina, casual e fitness. Veja as peças disponíveis e peça pelo WhatsApp.">
+<meta name="theme-color" content="#FFFFFF">
+<title>Rosa Modas · Ousadia &amp; Beleza</title>
+<meta name="description" content="Rosa Modas · Ousadia & Beleza. Masculino, feminino, infantil e variedades. Veja as peças e peça pelo WhatsApp.">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap');
 :root{
@@ -19,17 +19,23 @@ a{color:inherit}
 .lbl{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
 /* topo */
-.bar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;
-  background:var(--rosa);color:#fff;padding:calc(8px + env(safe-area-inset-top)) 16px 8px}
-.bar b{font-size:13px;font-weight:700;letter-spacing:.16em}
-.bar a{margin-left:auto;font-size:12px;opacity:.9;text-decoration:none;font-weight:500}
+.bar{position:sticky;top:0;z-index:40;display:flex;align-items:baseline;gap:6px;
+  background:var(--card);border-bottom:2px solid var(--rosa);
+  padding:calc(10px + env(safe-area-inset-top)) 16px 9px}
+.bar i,.bar b{font-size:14px;font-weight:700;letter-spacing:.17em;font-style:normal}
+.bar i{color:var(--ink)}
+.bar b{color:var(--rosa)}
+.bar a{margin-left:auto;font-size:12px;color:var(--muted);text-decoration:none;font-weight:500}
 
 /* hero */
 .hero{text-align:center;padding:26px 20px 20px}
 .hero svg{display:block;margin:0 auto 6px;max-width:100%;height:auto}
-.hero h1{margin:0;font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.02}
+.hero h1{margin:0;font-size:38px;font-weight:700;letter-spacing:.06em;line-height:1.0}
 .hero h1 span{display:block}
-.hero p{margin:8px 0 0;font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.hero h1 .rs{color:var(--ink)}
+.hero h1 .md{color:var(--rosa)}
+.hero .lema{margin:10px 0 0;font-size:19px;font-weight:600;color:var(--rosa);letter-spacing:.01em}
+.hero p{margin:6px 0 0;font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
 
 /* filtros */
 .filtros{position:sticky;top:37px;z-index:30;background:var(--paper);
@@ -114,7 +120,7 @@ a{color:inherit}
 }
 </style>
 
-<div class="bar"><b>ROSA MODAS</b><a href="https://instagram.com/rosamodas59" target="_blank" rel="noopener">@rosamodas59</a></div>
+<div class="bar"><i>ROSA</i><b>MODAS</b><a href="https://instagram.com/rosamodas59" target="_blank" rel="noopener">@rosamodas59</a></div>
 
 <div class="hero" id="hero"></div>
 <div class="filtros" id="filtros" hidden></div>
@@ -162,8 +168,9 @@ function guirlanda(){
 let CAT=null, itens=[], fCat='', fTam='', busca='', atual=null;
 
 async function iniciar(){
-  $('hero').innerHTML=`${guirlanda()}<h1><span>ROSA</span><span>MODAS</span></h1>
-    <p>Moda feminina · Casual · Fitness</p>`;
+  $('hero').innerHTML=`${guirlanda()}<h1><span class="rs">ROSA</span><span class="md">MODAS</span></h1>
+    <p class="lema">Ousadia &amp; Beleza</p>
+    <p>Masculino · Feminino · Infantil &amp; Variedades</p>`;
   try{
     const r=await fetch('catalogo.json?v='+Date.now());
     if(!r.ok) throw new Error('http '+r.status);
@@ -269,7 +276,8 @@ function linkZap(i){
 function montarRodape(){
   const zap=(CAT&&CAT.zap)||'5541997180152';
   $('rodape').innerHTML=`${guirlanda()}
-    <b>ROSA MODAS</b><p>Moda feminina · Casual · Fitness</p>
+    <b><span style="color:var(--ink)">ROSA</span> <span style="color:var(--rosa)">MODAS</span></b>
+    <p>Ousadia &amp; Beleza · Masculino · Feminino · Infantil &amp; Variedades</p>
     <div class="pe-links">
       <a href="https://wa.me/${zap}" target="_blank" rel="noopener">WhatsApp (41) 99718-0152</a>
       <a href="https://instagram.com/rosamodas59" target="_blank" rel="noopener">@rosamodas59</a>
